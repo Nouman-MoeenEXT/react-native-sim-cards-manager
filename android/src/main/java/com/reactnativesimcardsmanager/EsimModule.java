@@ -17,7 +17,7 @@ public class EsimModule {
     private EuiccManager mgr;
     private final ReactContext mReactContext;
 
-    EsimModule(ReactContext reactContext) {
+   public EsimModule(ReactContext reactContext) {
         mReactContext = reactContext;
         Log.d(TAG, "EsimModule initialized"); // Log when the EsimModule is initialized
      }
