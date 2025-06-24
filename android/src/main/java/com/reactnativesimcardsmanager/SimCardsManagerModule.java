@@ -24,7 +24,6 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
 import android.util.Log;
-
 import java.util.List;
 
 @ReactModule(name = SimCardsManagerModule.NAME)
