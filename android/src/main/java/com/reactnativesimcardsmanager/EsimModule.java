@@ -9,7 +9,6 @@ import androidx.annotation.RequiresApi;
 
 import com.facebook.react.bridge.ReactContext;
 import android.util.Log;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class EsimModule {
     private static final String TAG = "EsimModule";
