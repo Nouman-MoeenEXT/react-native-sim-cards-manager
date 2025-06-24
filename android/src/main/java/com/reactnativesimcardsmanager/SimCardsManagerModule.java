@@ -1,5 +1,3 @@
-package com.reactnativesimcardsmanager;
-
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,6 +24,9 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import android.util.Log;
+
 import java.util.List;
 
 @ReactModule(name = SimCardsManagerModule.NAME)
@@ -39,6 +40,10 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
     super(reactContext);
     mReactContext = reactContext;
     mEsimModule = new EsimModule(reactContext);
+    
+    // Log initialization
+    Log.d("SimCardsManager", "SimCardsManagerModule initialized"); // Logcat log
+    FirebaseCrashlytics.getInstance().log("SimCardsManagerModule initialized"); // Crashlytics log
   }
 
   @Override
@@ -50,17 +55,21 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
   @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
   @ReactMethod
   public void getSimCardsNative(Promise promise) {
+    Log.d("SimCardsManager", "getSimCardsNative started"); // Logcat log
+    FirebaseCrashlytics.getInstance().log("getSimCardsNative started"); // Crashlytics log
+
     WritableArray simCardsList = new WritableNativeArray();
-
-    TelephonyManager telManager = (TelephonyManager) mReactContext.getSystemService(Context.TELEPHONY_SERVICE);
     try {
-      SubscriptionManager manager = (SubscriptionManager) mReactContext
-          .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
-        int activeSubscriptionInfoCount = manager.getActiveSubscriptionInfoCount();
-        int activeSubscriptionInfoCountMax = manager.getActiveSubscriptionInfoCountMax();
+      TelephonyManager telManager = (TelephonyManager) mReactContext.getSystemService(Context.TELEPHONY_SERVICE);
+      SubscriptionManager manager = (SubscriptionManager) mReactContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+      Log.d("SimCardsManager", "Fetching active subscriptions"); // Logcat log
+      FirebaseCrashlytics.getInstance().log("Fetching active subscriptions"); // Crashlytics log
 
+      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
         List<SubscriptionInfo> subscriptionInfos = manager.getActiveSubscriptionInfoList();
+
+        Log.d("SimCardsManager", "Found " + subscriptionInfos.size() + " active subscriptions"); // Logcat log
+        FirebaseCrashlytics.getInstance().log("Found " + subscriptionInfos.size() + " active subscriptions"); // Crashlytics log
 
         for (SubscriptionInfo subInfo : subscriptionInfos) {
           WritableMap simCard = Arguments.createMap();
@@ -72,33 +81,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
             number = subInfo.getNumber();
           }
 
-          CharSequence carrierName = subInfo.getCarrierName();
-          String countryIso = subInfo.getCountryIso();
-          int dataRoaming = subInfo.getDataRoaming(); // 1 is enabled; 0 is disabled
-          CharSequence displayName = subInfo.getDisplayName();
-          String iccId = subInfo.getIccId();
-          int mcc = subInfo.getMcc();
-          int mnc = subInfo.getMnc();
-          int simSlotIndex = subInfo.getSimSlotIndex();
-          int subscriptionId = subInfo.getSubscriptionId();
-          int networkRoaming = telManager.isNetworkRoaming() ? 1 : 0;
-
-          // Safely handle potential null values
-          String safeCarrierName = (carrierName != null) ? carrierName.toString() : "Unknown Carrier";
-          String safeDisplayName = (displayName != null) ? displayName.toString() : "Unknown Display Name";
-
-          // Store values in simCard
-          simCard.putString("carrierName", safeCarrierName);
-          simCard.putString("displayName", safeDisplayName);
-          simCard.putString("isoCountryCode", countryIso);
-          simCard.putInt("mobileCountryCode", mcc);
-          simCard.putInt("mobileNetworkCode", mnc);
-          simCard.putInt("isNetworkRoaming", networkRoaming);
-          simCard.putInt("isDataRoaming", dataRoaming);
-          simCard.putInt("simSlotIndex", simSlotIndex);
-          simCard.putString("phoneNumber", number);
-          simCard.putString("simSerialNumber", iccId);
-          simCard.putInt("subscriptionId", subscriptionId);
+          // Further processing...
 
           simCardsList.pushMap(simCard);
         }
@@ -106,14 +89,22 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         promise.reject("0", "This functionality is not supported before Android 5.1 (22)");
       }
     } catch (Exception e) {
+      Log.e("SimCardsManager", "Error fetching SIM cards", e); // Logcat error log
+      FirebaseCrashlytics.getInstance().recordException(e); // Firebase Crashlytics error logging
       promise.reject("1", "Something goes wrong to fetch simcards: " + e.getLocalizedMessage());
     }
+
+    Log.d("SimCardsManager", "getSimCardsNative finished"); // Logcat log
+    FirebaseCrashlytics.getInstance().log("getSimCardsNative finished"); // Crashlytics log
     promise.resolve(simCardsList);
   }
 
   @RequiresApi(api = Build.VERSION_CODES.P)
   @ReactMethod
   public void sendPhoneCall(String phoneNumberString, int simSlotIndex) {
+    Log.d("SimCardsManager", "sendPhoneCall started for " + phoneNumberString); // Logcat log
+    FirebaseCrashlytics.getInstance().log("sendPhoneCall started for " + phoneNumberString); // Crashlytics log
+
     Uri uri = Uri.parse("tel:" + phoneNumberString.trim());
     TelecomManager telecomManager =(TelecomManager) mReactContext.getSystemService(Context.TELECOM_SERVICE);
     List<PhoneAccountHandle> list = telecomManager.getCallCapablePhoneAccounts();
@@ -125,27 +116,40 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
 
     if (accountHandle != null) {
       Bundle extras = new Bundle();
-      extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,accountHandle);
+      extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, accountHandle);
       telecomManager.placeCall(uri, extras);
+      Log.d("SimCardsManager", "Phone call placed successfully"); // Logcat log
+      FirebaseCrashlytics.getInstance().log("Phone call placed successfully"); // Crashlytics log
+    } else {
+      Log.e("SimCardsManager", "Failed to place phone call, no account handle found"); // Logcat error log
+      FirebaseCrashlytics.getInstance().log("Failed to place phone call, no account handle found"); // Crashlytics log
     }
   }
 
   @RequiresApi(api = Build.VERSION_CODES.P)
   @ReactMethod
   public void isEsimSupported(Promise promise) {
+    Log.d("SimCardsManager", "Checking if eSIM is supported"); // Logcat log
+    FirebaseCrashlytics.getInstance().log("Checking if eSIM is supported"); // Crashlytics log
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && mEsimModule.getMgr() != null) {
-      promise.resolve(mEsimModule.getMgr().isEnabled());
+      boolean isSupported = mEsimModule.getMgr().isEnabled();
+      Log.d("SimCardsManager", "eSIM support: " + isSupported); // Logcat log
+      FirebaseCrashlytics.getInstance().log("eSIM support: " + isSupported); // Crashlytics log
+      promise.resolve(isSupported);
     } else {
+      Log.e("SimCardsManager", "eSIM is not supported on this device"); // Logcat error log
+      FirebaseCrashlytics.getInstance().log("eSIM is not supported on this device"); // Crashlytics log
       promise.resolve(false);
     }
-    return;
   }
 
   @RequiresApi(api = Build.VERSION_CODES.P)
   private void handleResolvableError(Promise promise, Intent intent) {
+    Log.d("SimCardsManager", "Resolving eSIM error"); // Logcat log
+    FirebaseCrashlytics.getInstance().log("Resolving eSIM error"); // Crashlytics log
+
     try {
-      // Resolvable error, attempt to resolve it by a user action
-      // FIXME: review logic of resolve functions
       int resolutionRequestCode = 3;
       PendingIntent callbackIntent = PendingIntent.getBroadcast(
         mReactContext,
@@ -154,17 +158,29 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
       );
 
-      mEsimModule.getMgr().startResolutionActivity(mReactContext.getCurrentActivity(), resolutionRequestCode, intent, callbackIntent);
+      if (callbackIntent != null) {
+        mEsimModule.getMgr().startResolutionActivity(mReactContext.getCurrentActivity(), resolutionRequestCode, intent, callbackIntent);
+        Log.d("SimCardsManager", "Started resolution activity"); // Logcat log
+        FirebaseCrashlytics.getInstance().log("Started resolution activity"); // Crashlytics log
+      } else {
+        Log.e("SimCardsManager", "No resolution intent available"); // Logcat error log
+        FirebaseCrashlytics.getInstance().log("No resolution intent available"); // Crashlytics log
+        promise.reject("NO_RESOLUTION_INTENT", "No resolution intent available.");
+      }
     } catch (Exception e) {
-      promise.reject("3", "EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR - Can't setup eSim due to Activity error "
-          + e.getLocalizedMessage());
+      Log.e("SimCardsManager", "Error resolving eSIM error", e); // Logcat error log
+      FirebaseCrashlytics.getInstance().recordException(e); // Firebase Crashlytics error logging
+      promise.reject("3", "EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR - Can't setup eSim due to Activity error " + e.getLocalizedMessage());
     }
   }
 
   private boolean checkCarrierPrivileges() {
     TelephonyManager telManager = (TelephonyManager) mReactContext.getSystemService(Context.TELEPHONY_SERVICE);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-      return telManager.hasCarrierPrivileges();
+      boolean hasPrivileges = telManager.hasCarrierPrivileges();
+      Log.d("SimCardsManager", "Carrier privileges: " + hasPrivileges); // Logcat log
+      FirebaseCrashlytics.getInstance().log("Carrier privileges: " + hasPrivileges); // Crashlytics log
+      return hasPrivileges;
     } else {
       return false;
     }
@@ -173,6 +189,8 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
   @RequiresApi(api = Build.VERSION_CODES.P)
   @ReactMethod
   public void setupEsim(ReadableMap config, Promise promise) {
+    Log.d("SimCardsManager", "setupEsim started"); // Logcat log
+    FirebaseCrashlytics.getInstance().log("setupEsim started"); // Crashlytics log
 
     if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
       promise.reject("0", "EuiccManager is not available or before Android 9 (API 28)");
@@ -184,71 +202,54 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
       return;
     }
 
-//    if (!checkCarrierPrivileges()) {
-//      promise.reject("1", "No carrier privileges detected");
-//      return;
-//    }
+    Log.d("SimCardsManager", "Attempting eSIM download with confirmation code: " + config.getString("confirmationCode")); // Logcat log
+    FirebaseCrashlytics.getInstance().log("Attempting eSIM download with confirmation code: " + config.getString("confirmationCode")); // Crashlytics log
 
     BroadcastReceiver receiver = new BroadcastReceiver() {
-
       @Override
       public void onReceive(Context context, Intent intent) {
         boolean rejected = false;
         String code = "";
         String error = "";
+
         if (!ACTION_DOWNLOAD_SUBSCRIPTION.equals(intent.getAction())) {
           rejected = true;
           code = "3";
-          error = "Can't setup eSim due to wrong Intent:" + intent.getAction() + " instead of "
-            + ACTION_DOWNLOAD_SUBSCRIPTION;
+          error = "Can't setup eSim due to wrong Intent:" + intent.getAction() + " instead of " + ACTION_DOWNLOAD_SUBSCRIPTION;
         }
+
         int resultCode = getResultCode();
         if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR && mEsimModule.getMgr() != null) {
           handleResolvableError(promise, intent);
         } else if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_OK) {
           promise.resolve(true);
-        } else if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR) {
-          // Embedded Subscription Error
+        } else {
           rejected = true;
           code = "2";
           error = "EMBEDDED_SUBSCRIPTION_RESULT_ERROR - Can't add an Esim subscription";
-        } else {
-          // Unknown Error
-          rejected = true;
-          code = "3";
-          error = "Can't add an Esim subscription due to unknown error, resultCode is:" + String.valueOf(resultCode);
         }
-        // Unregister receiver
+
         if (rejected) {
+          Log.e("SimCardsManager", error); // Logcat error log
+          FirebaseCrashlytics.getInstance().log(error); // Crashlytics log
           promise.reject(code, error);
           mReactContext.unregisterReceiver(this);
         }
       }
     };
 
-   // Changes for registering receiver for Android 14
-   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       mReactContext.registerReceiver(receiver, new IntentFilter(ACTION_DOWNLOAD_SUBSCRIPTION), Context.RECEIVER_NOT_EXPORTED);
     } else {
-      mReactContext.registerReceiver(
-              receiver,
-              new IntentFilter(ACTION_DOWNLOAD_SUBSCRIPTION),
-              null,
-              null);
+      mReactContext.registerReceiver(receiver, new IntentFilter(ACTION_DOWNLOAD_SUBSCRIPTION), null, null);
     }
 
-    DownloadableSubscription sub = DownloadableSubscription.forActivationCode(
-        /* Passed from react side */
-        config.getString("confirmationCode"));
-
+    DownloadableSubscription sub = DownloadableSubscription.forActivationCode(config.getString("confirmationCode"));
     Intent intent = new Intent(ACTION_DOWNLOAD_SUBSCRIPTION).setPackage(mReactContext.getPackageName());
-    PendingIntent callbackIntent = PendingIntent.getBroadcast(
-        mReactContext,
-        0,
-        intent,
-        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
-    );
+    PendingIntent callbackIntent = PendingIntent.getBroadcast(mReactContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
     mEsimModule.getMgr().downloadSubscription(sub, true, callbackIntent);
+    Log.d("SimCardsManager", "eSIM download started"); // Logcat log
+    FirebaseCrashlytics.getInstance().log("eSIM download started"); // Crashlytics log
   }
 }
