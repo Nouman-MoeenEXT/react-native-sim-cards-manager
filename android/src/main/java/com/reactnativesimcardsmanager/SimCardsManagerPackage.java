@@ -1,4 +1,5 @@
 package com.reactnativesimcardsmanager;
+import com.reactnativesimcardsmanager.SimCardsManagerModule;
 
 import androidx.annotation.NonNull;
 
@@ -19,7 +20,6 @@ public class SimCardsManagerPackage implements ReactPackage {
         modules.add(new SimCardsManagerModule(reactContext));
         return modules;
     }
-
     @NonNull
     @Override
     public List<ViewManager> createViewManagers(@NonNull ReactApplicationContext reactContext) {
