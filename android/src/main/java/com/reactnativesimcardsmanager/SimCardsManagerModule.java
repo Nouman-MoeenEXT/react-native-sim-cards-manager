@@ -25,6 +25,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
+import android.util.Log;
 
 import java.util.List;
 
@@ -39,6 +40,8 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
     super(reactContext);
     mReactContext = reactContext;
     mEsimModule = new EsimModule(reactContext);
+    Log.d("SimCardsManager", "SimCardsManagerModule initialized"); // Logcat log
+
   }
 
   @Override
