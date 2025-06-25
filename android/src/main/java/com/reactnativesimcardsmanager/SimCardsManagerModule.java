@@ -231,7 +231,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
             + ACTION_DOWNLOAD_SUBSCRIPTION;
         }
         int resultCode = getResultCode();
-      Log.d("eSimManager", "Starting eSim Installation: " + String.valueOf(resultCode));
+      Log.d("eSimManager", "Starting eSim Installation: ");
         if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR && mEsimModule.getMgr() != null) {
           handleResolvableError(promise, intent);
         } else if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_OK) {
