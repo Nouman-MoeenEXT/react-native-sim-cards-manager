@@ -199,6 +199,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
   @RequiresApi(api = Build.VERSION_CODES.P)
   @ReactMethod
   public void setupEsim(ReadableMap config, Promise promise) {
+        Log.d("Starting eSim Installation"); // Logcat log
 
     if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
       promise.reject("0", "EuiccManager is not available or before Android 9 (API 28)");
@@ -222,6 +223,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         boolean rejected = false;
         String code = "";
         String error = "";
+        Log.d("In On recieve method");
         if (!ACTION_DOWNLOAD_SUBSCRIPTION.equals(intent.getAction())) {
           rejected = true;
           code = "3";
@@ -229,6 +231,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
             + ACTION_DOWNLOAD_SUBSCRIPTION;
         }
         int resultCode = getResultCode();
+      Log.d("eSimManager", "Starting eSim Installation: " + resultCode);
         if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR && mEsimModule.getMgr() != null) {
           handleResolvableError(promise, intent);
         } else if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_OK) {
