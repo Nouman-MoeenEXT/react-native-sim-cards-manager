@@ -53,17 +53,22 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
   @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
   @ReactMethod
   public void getSimCardsNative(Promise promise) {
+        Log.d("SimCardsManager", "getSimCardsNative started"); // Logcat log
+
     WritableArray simCardsList = new WritableNativeArray();
 
     TelephonyManager telManager = (TelephonyManager) mReactContext.getSystemService(Context.TELEPHONY_SERVICE);
     try {
       SubscriptionManager manager = (SubscriptionManager) mReactContext
           .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+                Log.d("SimCardsManager", "Fetching active subscriptions"); // Logcat log
+
       if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
         int activeSubscriptionInfoCount = manager.getActiveSubscriptionInfoCount();
         int activeSubscriptionInfoCountMax = manager.getActiveSubscriptionInfoCountMax();
 
         List<SubscriptionInfo> subscriptionInfos = manager.getActiveSubscriptionInfoList();
+        Log.d("SimCardsManager", "Found " + subscriptionInfos.size() + " active subscriptions"); // Logcat log
 
         for (SubscriptionInfo subInfo : subscriptionInfos) {
           WritableMap simCard = Arguments.createMap();
@@ -109,6 +114,8 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         promise.reject("0", "This functionality is not supported before Android 5.1 (22)");
       }
     } catch (Exception e) {
+            Log.e("SimCardsManager", "Error fetching SIM cards", e); // Logcat error log
+
       promise.reject("1", "Something goes wrong to fetch simcards: " + e.getLocalizedMessage());
     }
     promise.resolve(simCardsList);
@@ -136,9 +143,15 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
   @RequiresApi(api = Build.VERSION_CODES.P)
   @ReactMethod
   public void isEsimSupported(Promise promise) {
+        Log.d("SimCardsManager", "Checking if eSIM is supported"); // Logcat log
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && mEsimModule.getMgr() != null) {
+            Log.d("SimCardsManager", "eSIM support: " + isSupported); // Logcat log
+
       promise.resolve(mEsimModule.getMgr().isEnabled());
     } else {
+            Log.e("SimCardsManager", "eSIM is not supported on this device"); // Logcat error log
+
       promise.resolve(false);
     }
     return;
@@ -146,6 +159,8 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
 
   @RequiresApi(api = Build.VERSION_CODES.P)
   private void handleResolvableError(Promise promise, Intent intent) {
+        Log.d("SimCardsManager", "Resolving eSIM error"); // Logcat log
+
     try {
       // Resolvable error, attempt to resolve it by a user action
       // FIXME: review logic of resolve functions
@@ -157,8 +172,16 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
       );
 
-      mEsimModule.getMgr().startResolutionActivity(mReactContext.getCurrentActivity(), resolutionRequestCode, intent, callbackIntent);
+      if (callbackIntent != null) {
+        mEsimModule.getMgr().startResolutionActivity(mReactContext.getCurrentActivity(), resolutionRequestCode, intent, callbackIntent);
+        Log.d("SimCardsManager", "Started resolution activity"); // Logcat log
+      } else {
+        Log.e("SimCardsManager", "No resolution intent available"); // Logcat error log
+        promise.reject("NO_RESOLUTION_INTENT", "No resolution intent available.");
+      }
     } catch (Exception e) {
+            Log.e("SimCardsManager", "Error resolving eSIM error", e); // Logcat error log
+
       promise.reject("3", "EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR - Can't setup eSim due to Activity error "
           + e.getLocalizedMessage());
     }
@@ -223,6 +246,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         }
         // Unregister receiver
         if (rejected) {
+                    Log.e("SimCardsManager", error); // Logcat error log
           promise.reject(code, error);
           mReactContext.unregisterReceiver(this);
         }
