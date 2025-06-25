@@ -199,7 +199,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
   @RequiresApi(api = Build.VERSION_CODES.P)
   @ReactMethod
   public void setupEsim(ReadableMap config, Promise promise) {
-        Log.d("Starting eSim Installation"); // Logcat log
+        Log.d("SimCardsManager","Starting eSim Installation"); // Logcat log
 
     if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
       promise.reject("0", "EuiccManager is not available or before Android 9 (API 28)");
