@@ -20,6 +20,7 @@ import android.telephony.SubscriptionManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import android.app.Activity;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
