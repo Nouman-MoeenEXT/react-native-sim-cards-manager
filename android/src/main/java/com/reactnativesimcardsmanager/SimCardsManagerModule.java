@@ -146,7 +146,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         Log.d("SimCardsManager", "Checking if eSIM is supported"); // Logcat log
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && mEsimModule.getMgr() != null) {
-            Log.d("SimCardsManager", "eSIM support: " + isSupported); // Logcat log
+            Log.d("SimCardsManager", "eSIM support: "); // Logcat log
 
       promise.resolve(mEsimModule.getMgr().isEnabled());
     } else {
