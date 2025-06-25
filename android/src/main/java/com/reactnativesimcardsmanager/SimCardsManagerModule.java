@@ -223,7 +223,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
         boolean rejected = false;
         String code = "";
         String error = "";
-        Log.d("In On recieve method");
+       Log.d("SimCardsManager", "In On receive method"); 
         if (!ACTION_DOWNLOAD_SUBSCRIPTION.equals(intent.getAction())) {
           rejected = true;
           code = "3";
@@ -231,7 +231,7 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
             + ACTION_DOWNLOAD_SUBSCRIPTION;
         }
         int resultCode = getResultCode();
-      Log.d("eSimManager", "Starting eSim Installation: " + resultCode);
+      Log.d("eSimManager", "Starting eSim Installation: " + String.valueOf(resultCode));
         if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR && mEsimModule.getMgr() != null) {
           handleResolvableError(promise, intent);
         } else if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_OK) {
