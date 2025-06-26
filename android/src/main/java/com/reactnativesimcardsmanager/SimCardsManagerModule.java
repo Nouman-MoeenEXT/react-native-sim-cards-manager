@@ -20,6 +20,7 @@ import android.telephony.SubscriptionManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import android.app.Activity;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -156,36 +157,43 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
     }
     return;
   }
-
   @RequiresApi(api = Build.VERSION_CODES.P)
-  private void handleResolvableError(Promise promise, Intent intent) {
-        Log.d("SimCardsManager", "Resolving eSIM error"); // Logcat log
-
+private void handleResolvableError(Promise promise, Intent intent) {
     try {
-      // Resolvable error, attempt to resolve it by a user action
-      // FIXME: review logic of resolve functions
-      int resolutionRequestCode = 3;
-      PendingIntent callbackIntent = PendingIntent.getBroadcast(
-        mReactContext,
-        resolutionRequestCode,
-        intent,
-        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
-      );
+       Log.d("SimCardsManager", "Resolving eSIM error"); // Logcat log
+        int resolutionRequestCode = 3;
+        PendingIntent callbackIntent = intent.getParcelableExtra("android.telephony.euicc.extra.RESOLUTION_INTENT");
+        
+        if (callbackIntent != null) {
+                  Log.d("SimCardsManager", "Started resolution activity"); // Logcat log
+            mReactContext.addActivityEventListener(new BaseActivityEventListener() {
+                @Override
+                public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+                    if (requestCode == resolutionRequestCode) { // Check request code
+                        if (resultCode == Activity.RESULT_OK) {
+                            // eSIM successfully installed
+                            promise.resolve("eSIM installation successful");
+                        } else {
+                            // eSIM installation failed or was canceled
+                            promise.reject("4", "eSIM installation failed or was canceled");
+                        }
+                        // Remove event listener after handling the result
+                        mReactContext.removeActivityEventListener(this);
+                    }
+                }
+            });
 
-      if (callbackIntent != null) {
-        mEsimModule.getMgr().startResolutionActivity(mReactContext.getCurrentActivity(), resolutionRequestCode, intent, callbackIntent);
-        Log.d("SimCardsManager", "Started resolution activity"); // Logcat log
-      } else {
-        Log.e("SimCardsManager", "No resolution intent available"); // Logcat error log
-        promise.reject("NO_RESOLUTION_INTENT", "No resolution intent available.");
-      }
-    } catch (Exception e) {
-            Log.e("SimCardsManager", "Error resolving eSIM error", e); // Logcat error log
+            // Start the resolution process
+            callbackIntent.send(resolutionRequestCode);
+        } else {
+            promise.reject("NO_RESOLUTION_INTENT", "No resolution intent available.");
+        }
+    } catch (PendingIntent.CanceledException e) {
+                  Log.e("SimCardsManager", "Error resolving eSIM error", e); // Logcat error log
 
-      promise.reject("3", "EMBEDDED_SUBSCRIPTION_RESULT_RESOLVABLE_ERROR - Can't setup eSim due to Activity error "
-          + e.getLocalizedMessage());
+        promise.reject("INTENT_CANCELED", "Resolution intent was canceled.", e);
     }
-  }
+}
 
   private boolean checkCarrierPrivileges() {
     TelephonyManager telManager = (TelephonyManager) mReactContext.getSystemService(Context.TELEPHONY_SERVICE);
@@ -238,9 +246,10 @@ public class SimCardsManagerModule extends ReactContextBaseJavaModule {
           promise.resolve(true);
         } else if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR) {
           // Embedded Subscription Error
-          rejected = true;
-          code = "2";
-          error = "EMBEDDED_SUBSCRIPTION_RESULT_ERROR - Can't add an Esim subscription";
+          // rejected = true;
+          // code = "2";
+          // error = "EMBEDDED_SUBSCRIPTION_RESULT_ERROR - Can't add an Esim subscription";
+           handleResolvableError(promise, intent);
         } else {
           // Unknown Error
           rejected = true;
