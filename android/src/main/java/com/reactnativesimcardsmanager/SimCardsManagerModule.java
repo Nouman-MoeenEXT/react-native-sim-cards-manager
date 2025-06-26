@@ -246,10 +246,10 @@ private void handleResolvableError(Promise promise, Intent intent) {
           promise.resolve(true);
         } else if (resultCode == EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR) {
           // Embedded Subscription Error
-          // rejected = true;
-          // code = "2";
-          // error = "EMBEDDED_SUBSCRIPTION_RESULT_ERROR - Can't add an Esim subscription";
-           handleResolvableError(promise, intent);
+          rejected = true;
+          code = "2";
+          error = "EMBEDDED_SUBSCRIPTION_RESULT_ERROR - Can't add an Esim subscription";
+          //  handleResolvableError(promise, intent);
         } else {
           // Unknown Error
           rejected = true;
