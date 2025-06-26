@@ -249,7 +249,6 @@ private void handleResolvableError(Promise promise, Intent intent) {
           rejected = true;
           code = "2";
           error = "EMBEDDED_SUBSCRIPTION_RESULT_ERROR - Can't add an Esim subscription";
-          //  handleResolvableError(promise, intent);
         } else {
           // Unknown Error
           rejected = true;
